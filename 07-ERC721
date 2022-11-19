@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.0.0/contracts/token/ERC721/ERC721.sol";
+
+
+contract ERC721I is ERC721 {
+    uint256 rate = 0.01 ether;
+    uint256 supply = 10000;
+    address payable public owner;
+
+    uint256 minted = 0;
+
+    constructor() ERC721("MyNFT", "MN") {
+        _mint(msg.sender, 1);
+        owner = payable(msg.sender);
+    }
+
+    modifier onlyOwner(){
+        require(msg.sender == owner,"Caller is not Owner");
+        _;
+    }
+
+    function mint() public payable {
+        require( minted+1<=supply,"Exceeded maximum NFT supply");
+        require(msg.value >= rate,"Not Enough Ether");
+        _mint(msg.sender, 1);
+        minted += 1 ;
+    }
+
+    function withdraw() public onlyOwner {
+        address _owner = owner;
+        uint256 amount = address(this).balance;
+        (bool sent, ) = _owner.call{value: amount}("");
+        require(sent, "Failed to send Ether");
+    }
+
+    receive() external payable {}
+
+    fallback() external payable {}
+}
